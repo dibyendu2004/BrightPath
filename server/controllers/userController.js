@@ -97,11 +97,14 @@ export const syncUser = async (req, res) => {
         let user = await User.findById(_id);
 
         if (!user) {
-            user = await User.create({ _id, email, name, imageUrl, role: 'educator' }); // Defaulting to educator for testing convenience as requested by flow
+            user = await User.create({ _id, email, name, imageUrl, role: 'educator' });
         } else {
              user.name = name;
              user.email = email;
              user.imageUrl = imageUrl;
+             if (!user.role || user.role === 'student') {
+                user.role = 'educator';
+             }
              await user.save();
         }
 

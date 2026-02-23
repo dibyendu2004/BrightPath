@@ -1,11 +1,16 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from '../../components/educator/Navbar'
 import SideBar from '../../components/educator/SideBar'
 import Footer from '../../components/educator/Footer'
+import Loading from '../../components/student/Loading'
+import { AppContext } from '../../context/AppContext'
 
 const Educator = () => {
-  return (
+
+  const { userData } = useContext(AppContext)
+
+  return userData ? (
     <div className='text-default min-h-screen bg-white'>
       <Navbar />
       <div className='flex'>
@@ -16,7 +21,7 @@ const Educator = () => {
       </div>
       <Footer />
     </div>
-  )
+  ) : <Loading />
 }
 
 export default Educator
