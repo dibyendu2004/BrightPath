@@ -38,7 +38,7 @@ const Dashboard = () => {
   if (!dashboardData) return <Loading />
 
   return (
-    <div className='min-h-screen flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0'>
+    <div className='min-h-screen flex flex-col items-start justify-start gap-8 md:p-8 md:pb-0 p-4 pt-8 pb-0'>
       <div className='flex flex-wrap items-center gap-5'>
 
         <div className='flex items-center gap-3 shadow-card border border-blue-500 p-4 w-56 rounded-md'>

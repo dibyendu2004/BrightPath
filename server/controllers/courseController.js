@@ -1,9 +1,10 @@
 import Course from "../models/Course.js";
+import User from "../models/User.js";
 
 // Get all courses
 export const getAllCourses = async (req, res) => {
     try {
-        const courses = await Course.find({ isPublished: true }).select(['-courseContent', '-enrolledStudents']).populate({ path: 'educator' });
+        const courses = await Course.find({ isPublished: true }).select(['-courseContent', '-enrolledStudents']).populate({ path: 'educator' }).populate({ path: 'courseRatings.userId', model: 'User', select: 'name imageUrl' });
         res.json({ success: true, courses });
     } catch (error) {
         res.json({ success: false, message: error.message });
@@ -14,7 +15,7 @@ export const getAllCourses = async (req, res) => {
 export const getCourseId = async (req, res) => {
     try {
         const { id } = req.params;
-        const courseData = await Course.findById(id).populate({ path: 'educator' });
+        const courseData = await Course.findById(id).populate({ path: 'educator' }).populate({ path: 'courseRatings.userId', model: 'User', select: 'name imageUrl' });
         // remove lecture url from course content if it is not free preview
         courseData.courseContent.forEach(chapter => {
             chapter.chapterContent.forEach(lecture => {

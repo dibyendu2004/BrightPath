@@ -5,7 +5,7 @@ import { assets } from "../../assets/assets";
 import humanizeDuration from "humanize-duration";
 import YouTube from "react-youtube";
 import Footer from "../../components/student/Footer";
-import { Rating } from "react-simple-star-rating";
+import Rating from "../../components/student/Rating";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import { toast } from "react-toastify";
@@ -179,7 +179,7 @@ const Player = () => {
           <div className="flex items-center gap-2 py-3 mt-10">
             <h1 className="text-xl font-bold">Rate this Course:</h1>
             <div className='flex flex-row flex-nowrap shrink-0'>
-              <Rating onClick={handleRating} initialValue={userData.courseRatings?.find(r => r.courseId === courseId)?.rating || 0} size={25} />
+              <Rating onRate={handleRating} initialRating={userData.courseRatings?.find(r => r.courseId === courseId)?.rating || 0} />
             </div>
           </div>
 

@@ -2,6 +2,7 @@ import React, { useContext } from 'react'
 import { assets } from '../../assets/assets'
 import { AppContext } from '../../context/AppContext'
 import { Link } from 'react-router-dom'
+import Rating from './Rating'
 
 const CourseCard = ({course}) => {
 
@@ -16,8 +17,8 @@ const CourseCard = ({course}) => {
         <p className='text-gray-500 text-sm'>{course.educator.name}</p>
         <div className='flex items-center space-x-2 mt-2 font-medium'>
           <p className='text-yellow-500'>{calculateRating(course)}</p>
-          <div className='flex flex-row flex-nowrap shrink-0'>
-            {[...Array(5)].map((_,i)=>(<img key={i} src={i < Math.floor(calculateRating(course)) ? assets.star : assets.star_blank} alt='' className='w-3.5 h-3.5'/>))}
+          <div className='flex flex-row flex-nowrap shrink-0 scale-75 -ml-4'>
+            <Rating initialRating={calculateRating(course)} readOnly={true} />
           </div>
           <p className='text-gray-400 text-sm'>({course.courseRatings.length})</p>
         </div>

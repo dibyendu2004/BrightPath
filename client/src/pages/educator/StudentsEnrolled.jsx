@@ -33,7 +33,7 @@ const StudentsEnrolled = () => {
   }, [userData])
 
   return enrolledStudents ? (
-    <div className='min-h-screen flex flex-col items-start justify-between md:p-8 p-4 pt-8 pb-0'>
+    <div className='min-h-screen flex flex-col items-start justify-start gap-8 md:p-8 p-4 pt-8 pb-0'>
       <div className='flex flex-col'>
         <h1 className='text-2xl font-semibold'>Students Enrolled</h1>
         <div className='flex flex-col items-start justify-between w-full overflow-hidden border rounded-md mt-10'>

@@ -61,7 +61,7 @@ export const educatorDashboardData = async (req, res) => {
         const enrolledStudentsData = purchases.map(purchase => ({
             courseTitle: purchase.courseId?.courseTitle || 'Unknown Course',
             studentName: purchase.userId?.name || 'Unknown Student',
-            studentImage: purchase.userId?.imageUrl || assets.profile_img,
+            studentImage: purchase.userId?.imageUrl || '',
             purchaseDate: purchase.createdAt
         }));
 

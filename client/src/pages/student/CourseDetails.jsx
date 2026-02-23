@@ -9,7 +9,7 @@ import Footer from '../../components/student/Footer'
 import axios from 'axios'
 import { useAuth } from '@clerk/clerk-react'
 import { toast } from 'react-toastify'
-import { Rating } from 'react-simple-star-rating'
+import Rating from '../../components/student/Rating'
 
 const CourseDetails = () => {
 
@@ -30,22 +30,6 @@ const CourseDetails = () => {
     return (match && match[1].length === 11) ? match[1] : null;
   }
 
-  const handleRating = async (rate) => {
-     try {
-        const token = await getToken();
-        const { data } = await axios.post(backendUrl + '/api/user/rating', { courseId: id, rating: rate }, {
-           headers: { Authorization: `Bearer ${token}`, userid: userData._id }
-        });
-        if (data.success) {
-           toast.success(data.message);
-           fetchCourseData();
-        } else {
-           toast.error(data.message);
-        }
-     } catch (error) {
-        toast.error(error.message);
-     }
-  }
 
   const toggleSection = (index) => {
     setOpenSections((prev) => ({
@@ -113,10 +97,8 @@ const CourseDetails = () => {
           {/* Ratings */}
           <div className='flex items-center space-x-2 pt-3 pb-1 text-sm'>
             <p>{calculateRating(courseData)}</p>
-            <div className='flex flex-row flex-nowrap items-center shrink-0'>
-              {[...Array(5)].map((_, i) => (
-                <img key={i} src={i < Math.floor(calculateRating(courseData)) ? assets.star : assets.star_blank} alt="" className='w-3.5 h-3.5' />
-              ))}
+            <div className='flex flex-row flex-nowrap items-center shrink-0 scale-75 -ml-4'>
+              <Rating initialRating={calculateRating(courseData)} readOnly={true} />
             </div>
             <p className='text-blue-600'>({courseData.courseRatings.length} {courseData.courseRatings.length > 1 ? 'ratings' : 'rating'})</p>
             <p>{courseData.enrolledStudents.length} {courseData.enrolledStudents.length > 1 ? 'students' : 'student'}</p>
@@ -197,9 +179,8 @@ const CourseDetails = () => {
              </div>
 
              <div className='flex items-center text-sm md:text-base gap-4 pt-2 md:pt-4 text-gray-500'>
-                <div className='flex items-center gap-1'>
-                    <img src={assets.star} alt="" className='w-3.5'/>
-                    <p>{calculateRating(courseData)}</p>
+                <div className='flex items-center gap-1 scale-75 -ml-4'>
+                    <Rating initialRating={calculateRating(courseData)} readOnly={true} />
                 </div>
                 <div className='h-4 w-px bg-gray-500/40'></div>
                 <div className='flex items-center gap-1'>
@@ -217,14 +198,6 @@ const CourseDetails = () => {
                 {isAlreadyEnrolled ? 'Already Enrolled' : (userData && userData._id === courseData.educator._id) ? 'Creator Mode' : 'Enroll Now'}
              </button>
 
-             {isAlreadyEnrolled && (
-               <div className='pt-6 flex items-center justify-between'>
-                  <p className='md:text-lg font-medium text-gray-800'>Rate this course</p>
-                  <div className='flex flex-row flex-nowrap shrink-0'>
-                    <Rating onClick={handleRating} initialValue={userData.courseRatings?.find(r => r.courseId === id)?.rating || 0} size={25} />
-                  </div>
-               </div>
-             )}
 
              <div className='pt-6'>
                 <p className='md:text-xl text-lg font-medium text-gray-800'>What's in the course?</p>
@@ -248,14 +221,12 @@ const CourseDetails = () => {
          <div className='flex gap-10 pt-8 overflow-x-auto'>
             {courseData.courseRatings.map((item, index) => (
                <div key={index} className='flex-shrink-0 flex gap-4 border p-4 rounded-lg bg-gray-50 min-w-[300px] sm:min-w-[400px]'>
-                  <img src={assets.profile_img} alt="" className='w-12 h-12 rounded-full'/>
+                  <img src={item.userId?.imageUrl || assets.profile_img} alt="" className='w-12 h-12 rounded-full'/>
                   <div className='w-full'>
                      <div className='flex justify-between items-center w-full'>
-                        <h1 className='text-lg font-semibold'>{item.userId.name || 'Student'}</h1>
-                        <div className='flex flex-row flex-nowrap items-center shrink-0'>
-                           {[...Array(5)].map((_, i) => (
-                              <img key={i} src={i < item.rating ? assets.star : assets.star_blank} alt="" className='w-3.5 h-3.5' />
-                           ))}
+                        <h1 className='text-lg font-semibold'>{item.userId?.name || 'Student'}</h1>
+                        <div className='flex flex-row flex-nowrap items-center shrink-0 scale-75'>
+                           <Rating initialRating={item.rating} readOnly={true} />
                         </div>
                      </div>
                      <p className='text-gray-500 mt-2'>Excellent course! Highly informative and well-structured.</p>
