@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Course from "../models/Course.js";
 import CourseProgress from "../models/CourseProgress.js";
+import Purchase from "../models/Purchase.js";
 
 // Get user data
 export const getUserData = async (req, res) => {
@@ -21,7 +22,25 @@ export const userEnrolledCourses = async (req, res) => {
     try {
         const userId = req.auth.userId;
         const user = await User.findById(userId).populate('enrolledCourses');
-        res.json({ success: true, enrolledCourses: user.enrolledCourses });
+        
+        const enrolledCourses = await Promise.all(user.enrolledCourses.map(async (course) => {
+            const progress = await CourseProgress.findOne({ userId, courseId: course._id });
+            
+            let totalLectures = 0;
+            course.courseContent.forEach(chapter => {
+                totalLectures += chapter.chapterContent.length;
+            });
+
+            const completionPercentage = totalLectures > 0 ? (progress ? Math.floor((progress.completedLectures.length / totalLectures) * 100) : 0) : 0;
+
+            return {
+                ...course.toObject(),
+                totalLectures,
+                completionPercentage
+            }
+        }));
+
+        res.json({ success: true, enrolledCourses });
     } catch (error) {
         res.json({ success: false, message: error.message });
     }
@@ -38,12 +57,26 @@ export const purchaseCourse = async (req, res) => {
             return res.json({ success: false, message: "Course already purchased" });
         }
 
+        const course = await Course.findById(courseId);
+        
+        // Prevent educator from enrolling in their own course
+        if (course.educator === userId) {
+            return res.json({ success: false, message: "You cannot enroll in your own course" });
+        }
+
         user.enrolledCourses.push(courseId);
         await user.save();
-
-        const course = await Course.findById(courseId);
         course.enrolledStudents.push(userId);
         await course.save();
+
+        // Create Purchase Record
+        const amount = Number((course.coursePrice - course.discount * course.coursePrice / 100).toFixed(2));
+        await Purchase.create({
+            courseId,
+            userId,
+            amount,
+            status: 'completed'
+        });
 
         res.json({ success: true, message: "Course Purchased Successfully" });
     } catch (error) {
@@ -109,6 +142,36 @@ export const syncUser = async (req, res) => {
         }
 
         res.json({ success: true, user });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Add rating
+export const addRating = async (req, res) => {
+    try {
+        const { courseId, rating } = req.body;
+        const userId = req.auth.userId;
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.json({ success: false, message: "Course not found" });
+        }
+
+        const user = await User.findById(userId);
+        if (!user.enrolledCourses.includes(courseId)) {
+            return res.json({ success: false, message: "You must be enrolled to rate this course" });
+        }
+
+        const existingRatingIndex = course.courseRatings.findIndex(r => r.userId === userId);
+        if (existingRatingIndex > -1) {
+            course.courseRatings[existingRatingIndex].rating = rating;
+        } else {
+            course.courseRatings.push({ userId, rating });
+        }
+
+        await course.save();
+        res.json({ success: true, message: "Rating Added Successfully" });
     } catch (error) {
         res.json({ success: false, message: error.message });
     }

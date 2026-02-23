@@ -1,6 +1,7 @@
 import Course from "../models/Course.js";
 import User from "../models/User.js";
 import cloudinary from "cloudinary";
+import Purchase from "../models/Purchase.js";
 
 // Add new course
 export const addCourse = async (req, res) => {
@@ -46,18 +47,26 @@ export const educatorDashboardData = async (req, res) => {
         const courses = await Course.find({ educator });
         const totalCourses = courses.length;
 
-        const enrolledStudentsData = [];
-        courses.map((course) => {
-            course.enrolledStudents.map((studentId) => {
-                enrolledStudentsData.push({
-                    courseTitle: course.courseTitle,
-                    studentId
-                })
-            })
-        })
+        const courseIds = courses.map(course => course._id);
+        
+        // Fetch all purchases for educator's courses, sorted by date
+        const purchases = await Purchase.find({ 
+            courseId: { $in: courseIds },
+            status: 'completed'
+        }).sort({ createdAt: -1 }).populate('userId', 'name imageUrl').populate('courseId', 'courseTitle');
+
+        const totalEarnings = purchases.reduce((sum, purchase) => sum + (purchase.amount || 0), 0);
+
+        // Map data for dashboard table
+        const enrolledStudentsData = purchases.map(purchase => ({
+            courseTitle: purchase.courseId?.courseTitle || 'Unknown Course',
+            studentName: purchase.userId?.name || 'Unknown Student',
+            studentImage: purchase.userId?.imageUrl || assets.profile_img,
+            purchaseDate: purchase.createdAt
+        }));
 
         res.json({ success: true, dashboardData: {
-            totalEarnings: 0, // Placeholder
+            totalEarnings,
             enrolledStudentsData,
             totalCourses
         } });
@@ -71,16 +80,19 @@ export const getEnrolledStudentsData = async (req, res) => {
      try {
         const educator = req.auth.userId;
         const courses = await Course.find({ educator });
-        
-        let enrolledStudents = [];
-        courses.map(course => {
-            course.enrolledStudents.map(studentId => {
-                enrolledStudents.push({
-                    courseTitle: course.courseTitle,
-                    studentId
-                })
-            })
-        })
+        const courseIds = courses.map(course => course._id);
+
+        const purchases = await Purchase.find({
+            courseId: { $in: courseIds },
+            status: 'completed'
+        }).sort({ createdAt: -1 }).populate('userId', 'name imageUrl').populate('courseId', 'courseTitle');
+
+        const enrolledStudents = purchases.map(purchase => ({
+            courseTitle: purchase.courseId?.courseTitle || 'Unknown Course',
+            student: purchase.userId || { name: 'Unknown Student' },
+            purchaseDate: purchase.createdAt
+        }));
+
         res.json({ success: true, enrolledStudents });
      } catch (error) {
         res.json({ success: false, message: error.message });

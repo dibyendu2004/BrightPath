@@ -4,7 +4,7 @@ import SearchBar from '../../components/student/SearchBar'
 import { useParams } from 'react-router-dom'
 import CourseCard from '../../components/student/CourseCard'
 import { assets } from '../../assets/assets'
-import Footer from '../../components/student/footer'
+import Footer from '../../components/student/Footer'
 
 const CoursesList = () => {
 
@@ -47,7 +47,7 @@ const CoursesList = () => {
 
         }
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 my-16 gap-3 px-2 md:p-0'>
+        <div className='grid grid-cols-auto my-16 gap-5 px-2 md:p-0'>
            {filteredCourse.map((course,index)=> <CourseCard key={index} course={course}/>)}
         </div>
       </div>

@@ -5,7 +5,7 @@ import { assets } from "../../assets/assets";
 import humanizeDuration from "humanize-duration";
 import YouTube from "react-youtube";
 import Footer from "../../components/student/Footer";
-import Rating from "../../components/student/Rating";
+import { Rating } from "react-simple-star-rating";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import { toast } from "react-toastify";
@@ -20,22 +20,28 @@ const Player = () => {
   const [playerData, setPlayerData] = useState(null)
   const [progressData, setProgressData] = useState(null)
 
+  const getYouTubeId = (url) => {
+    if (!url) return null;
+    const regExp = /^.*(?:youtu.be\/|v\/|e\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[1].length === 11) ? match[1] : null;
+  }
+
   const getCourseData = () => {
-    enrolledCourses.map((course) => {
-      if (course._id === courseId) {
-        setCourseData(course)
-      }
-    })
+    const course = enrolledCourses.find((course) => course._id === courseId)
+    if (course) {
+      setCourseData(course)
+    }
   }
 
   const fetchUserCourseProgress = async () => {
     try {
       const token = await getToken()
-      const { data } = await axios.post(backendUrl + '/api/user/get-enrolled-course-progress', { courseId }, {
+      const { data } = await axios.get(backendUrl + '/api/user/progress/' + courseId, {
         headers: { Authorization: `Bearer ${token}`, userid: userData._id }
       })
       if (data.success) {
-        setProgressData(data.progressData)
+        setProgressData(data.progress)
       }
     } catch (error) {
       toast.error(error.message)
@@ -45,7 +51,7 @@ const Player = () => {
   const markCompleted = async (lectureId) => {
     try {
       const token = await getToken()
-      const { data } = await axios.post(backendUrl + '/api/user/update-course-progress', { courseId, lectureId }, {
+      const { data } = await axios.post(backendUrl + '/api/user/update-progress', { courseId, lectureId }, {
         headers: { Authorization: `Bearer ${token}`, userid: userData._id }
       })
       if (data.success) {
@@ -54,6 +60,23 @@ const Player = () => {
       }
     } catch (error) {
        toast.error(error.message)
+    }
+  }
+
+  const handleRating = async (rate) => {
+    try {
+      const token = await getToken();
+      const { data } = await axios.post(backendUrl + '/api/user/rating', { courseId, rating: rate }, {
+        headers: { Authorization: `Bearer ${token}`, userid: userData._id }
+      });
+      if (data.success) {
+        toast.success(data.message);
+        fetchUserEnrolledCourses();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
   }
 
@@ -118,7 +141,7 @@ const Player = () => {
                     {chapter.chapterContent.map((lecture, i) => (
                       <li key={i} className="flex items-start gap-2 py-1">
                         <img
-                          src={progressData && progressData.lectureCompleted.includes(lecture.lectureId) ? assets.blue_tick_icon : assets.play_icon}
+                          src={progressData && progressData.completedLectures.includes(lecture.lectureId) ? assets.blue_tick_icon : assets.play_icon}
                           alt="play icon"
                           className="w-4 h-4 mt-1"
                         />
@@ -155,7 +178,9 @@ const Player = () => {
 
           <div className="flex items-center gap-2 py-3 mt-10">
             <h1 className="text-xl font-bold">Rate this Course:</h1>
-            <Rating initialRating={0} />
+            <div className='flex flex-row flex-nowrap shrink-0'>
+              <Rating onClick={handleRating} initialValue={userData.courseRatings?.find(r => r.courseId === courseId)?.rating || 0} size={25} />
+            </div>
           </div>
 
 
@@ -165,14 +190,18 @@ const Player = () => {
         <div className="md:mt-10">
           {playerData ? (
             <div>
-              <YouTube
-                videoId={playerData.lectureUrl.split('/').pop()}
-                iframeClassName="w-full aspect-video"
-              />
+              {
+                getYouTubeId(playerData.lectureUrl) ? 
+                <YouTube
+                  videoId={getYouTubeId(playerData.lectureUrl)}
+                  iframeClassName="w-full aspect-video"
+                /> : 
+                <iframe src={playerData.lectureUrl} className="w-full aspect-video" allowFullScreen title="Lecture Video"></iframe>
+              }
               <div className="flex justify-between items-center mt-1">
                 <p>{playerData.chapter}.{playerData.lecture} {playerData.lectureTitle}</p>
                 <button onClick={() => markCompleted(playerData.lectureId)} className="text-blue-600">
-                  {progressData && progressData.lectureCompleted.includes(playerData.lectureId) ? 'Completed' : 'Mark Completed'}
+                  {progressData && progressData.completedLectures.includes(playerData.lectureId) ? 'Completed' : 'Mark Completed'}
                 </button>
               </div>
             </div>

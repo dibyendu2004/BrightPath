@@ -15,7 +15,7 @@ export default {
 
       },
       gridTemplateColumns:{
-        'auto' : 'repeat(auto-fit, minmax(200px,1fr))'
+        'auto' : 'repeat(auto-fit, minmax(280px,1fr))'
       },
       spacing:{
         'section-height' : '500px'
